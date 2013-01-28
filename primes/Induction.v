@@ -1,7 +1,5 @@
 Require Import Arith.
 
-Check nat_ind.
-
 Theorem nat_ind_le : forall P : nat -> Prop,
     P 0 -> (forall n, (forall m, m <= n -> P m) -> P (S n))
     -> forall n, P n.
@@ -33,6 +31,7 @@ Qed.
 
 Ltac induction_le_nat n := let IHn := fresh "IH" n in 
   try intros until n; pattern n; apply nat_ind_le; clear n; [ | intros n IHn ].
+
 
 
 Theorem nat_pred_interval_dec : forall P : nat -> Prop, (forall n, {P n} + {~ P n})
@@ -77,4 +76,13 @@ Proof.
     apply le_trans with (m := k); assumption.
     (* SearchAbout (_<=_ -> ~_<_). *)
     revert Hmn. apply le_not_lt. assumption.
+Qed.
+
+Theorem exists__not_forall_not : forall (S : Set) (P Q : S -> Prop),
+    (exists x : S, Q x /\ P x) -> ~ forall x : S, Q x -> ~ P x.
+Proof.
+  intros.
+  intro.
+  destruct H as [x [Qx Px]].
+  unfold not in H0. apply H0 with (x := x) ; assumption.
 Qed.

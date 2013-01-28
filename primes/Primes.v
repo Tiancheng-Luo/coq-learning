@@ -1,7 +1,9 @@
 Require Import Arith.
 Require Omega.
 
-Module Primes1.
+(* TODO(klao): remove this module after explaining the differences
+with the 'Inductive' approach. *)
+Module Primes0.
 
 (* 'divides' predicate. *)
 (* TODO(klao): replace with an inductive one! *)
@@ -57,10 +59,10 @@ Proof.
   omega.
 Qed.
 
-End Primes1.
+End Primes0.
 
 
-Module Primes2.
+Module Primes.
 
 (* 'divides' predicate. *)
 Inductive divides (a : nat) : nat -> Prop :=
@@ -71,11 +73,28 @@ Notation "( a | c )" := (divides a c) (at level 0) : nat_scope.
 
 (* 'prime' predicate. *)
 Inductive prime (n : nat) : Prop :=
-  prim : n > 1 -> (forall d, d > 1 -> (d | n) -> d = n) -> prime n.
+  prim : n > 1 -> (forall d, 1 < d < n -> ~ (d | n)) -> prime n.
 
 
 Inductive composite : nat -> Prop :=
   comps k l : k > 1 -> l > 1 -> composite (k*l).
+
+
+(* TODO: find a simple proof for stuff like this! Or some existing tools. *)
+Theorem mult_gt_parts : forall k l, k > 1 -> l > 1 -> k*l > k.
+Proof.
+  intros.
+  rewrite mult_comm.
+  destruct l. omega.
+  simpl.
+  remember (l * k) as lk.
+  assert (1 < lk).
+    rewrite Heqlk.
+    rewrite mult_comm.
+    apply NPeano.Nat.lt_1_mul_pos; omega.
+  clear Heqlk.
+  omega.
+Qed.
 
 Theorem composite_not_prime : forall n : nat,
   composite n -> ~ prime n.                                
@@ -84,16 +103,14 @@ Proof.
   intros n Hc Hp.
   destruct Hc as [k l Hk Hl].
   destruct Hp as [_ Hp].
-  assert (k = k * l) as Hkl.
-    apply Hp. assumption.
+  assert (k < k * l) as Hkl1.
+    apply mult_gt_parts; assumption.
+
+  assert (k = k * l) as Hkl2.
+    contradiction Hp with (d := k).
+    split. assumption. exact Hkl1.
     apply divs.
 
-  clear Hp.
-  rewrite mult_comm in Hkl.
-  assert (l = 1).
-  destruct l; inversion Hkl. omega.
-  destruct l. reflexivity.
-  simpl in Hkl. clear H; clear Hl. remember (l*k) as lk. clear Heqlk. omega.
   omega.
 Qed.
 
@@ -122,4 +139,4 @@ Proof.
     SearchAbout NPeano.div.
 Admitted.
 
-End Primes2.
+End Primes.
