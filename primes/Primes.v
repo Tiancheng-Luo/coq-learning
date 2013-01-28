@@ -123,6 +123,22 @@ Proof.
   assumption.
 Qed.
 
+Theorem divisible_dec : forall d n : nat, {(d | n)} + {~(d | n)}.
+Proof.
+  intros.
+  destruct (eq_nat_dec d 0) as [Hd0 | Hdn0].
+    destruct n. left. rewrite Hd0. apply (divs 0 0).
+      right. intro. inversion H. rewrite Hd0 in H1. discriminate H1.
+
+    (* d <> 0 *)
+    SearchAbout NPeano.div.
+    pose (NPeano.div_mod n d Hdn0) as Hnd. clearbody Hnd.
+    remember (NPeano.modulo n d) as n_mod_d.
+    destruct n_mod_d.
+      rewrite plus_0_r in Hnd.
+      left. inversion.
+    
+
 Theorem not_prime_composite : forall n : nat, n > 1 -> ~ prime n -> composite n.
 Proof.
   unfold not.
