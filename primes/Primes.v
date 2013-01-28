@@ -1,5 +1,6 @@
 Require Import Arith.
 Require Omega.
+Require Import Induction.
 
 (* TODO(klao): remove this module after explaining the differences
 with the 'Inductive' approach. *)
@@ -123,6 +124,8 @@ Proof.
   assumption.
 Qed.
 
+
+(* TODO(klao): prove directly without div? *)
 Theorem divisible_dec : forall d n : nat, {(d | n)} + {~(d | n)}.
 Proof.
   intros.
@@ -131,28 +134,76 @@ Proof.
       right. intro. inversion H. rewrite Hd0 in H1. discriminate H1.
 
     (* d <> 0 *)
-    SearchAbout NPeano.div.
     pose (NPeano.div_mod n d Hdn0) as Hnd. clearbody Hnd.
     remember (NPeano.modulo n d) as n_mod_d.
     destruct n_mod_d.
       rewrite plus_0_r in Hnd.
-      left. inversion.
-    
+      left. rewrite Hnd. apply divs.
 
-Theorem not_prime_composite : forall n : nat, n > 1 -> ~ prime n -> composite n.
-Proof.
-  unfold not.
-  intros.
-Admitted.
+      right. intro. inversion H. clear H.
+      symmetry in H0. pose H0 as H1.
+      apply (NPeano.Nat.div_unique_exact n d b Hdn0) in H1.
+      rewrite H1 in H0.
+      rewrite Hnd in H0 at 1.
+      rewrite <- plus_0_r in H0.
+      apply NPeano.Nat.add_cancel_l in H0.
+      discriminate H0.
+Qed.
 
-
-(* Not a good idea: separate into prime decidability and ~ prime -> composite. Or is it? *)
 Theorem prime_or_composite : forall n : nat, n > 1 -> {prime n} + {composite n}.
 Proof.
   intros.
-  assert (forall d, {(d | n)} + {~(d | n)}).
-    intros.
-    SearchAbout NPeano.div.
-Admitted.
+  assert ({exists d, 1 < d < n /\ (d | n)} + {forall d, 1 < d < n -> ~(d | n)}).
+    apply nat_pred_interval_dec. intro. apply divisible_dec.
+  destruct H0 as [ Hc | Hp ].
+    right.
+    destruct Hc as [d [[H1d Hdn] Hddivn]].
+    inversion Hddivn. clear Hddivn.
+    apply comps. assumption.
+      destruct (le_gt_dec b 1) as [Hb1 | Hb1].
+        assert (d * b <= d).
+          rewrite <- mult_1_r.
+          apply mult_le_compat_l. assumption.
+        rewrite H0 in H1.
+        omega. (* Hdn -><- H1 *)
+
+        assumption.
+
+    left.
+    apply prim; assumption.
+Qed.
+
+Theorem divides_trans : forall a b c, (a | b) -> (b | c) -> (a | c).
+Proof.
+  intros.
+  inversion H0.
+  inversion H.
+  rewrite <- mult_assoc.
+  apply divs.
+Qed.
+
+Theorem prime_divisor : forall n : nat, n > 1 -> exists p, prime p /\ (p | n).
+Proof.
+  (* TODO(klao): fix induction_lt_nat tactic, so it works after intros here. *)
+  induction_lt_nat n.
+  intro Hn1.
+  destruct (prime_or_composite n Hn1) as [Hp | Hc].
+    exists n.
+    split. exact Hp.
+    rewrite <- mult_1_r.
+    apply divs.
+
+    destruct Hc.
+    assert (k < k * l). apply mult_gt_parts; assumption.
+    pose (IHn k H1 H) as Hpk.
+    destruct Hpk as [p [Hp Hpdivk]].
+
+    exists p.
+    split. assumption.
+    apply divides_trans with (b := k).
+    assumption.
+    apply divs.
+Qed.
+
 
 End Primes.

@@ -33,6 +33,45 @@ Ltac induction_le_nat n := let IHn := fresh "IH" n in
   try intros until n; pattern n; apply nat_ind_le; clear n; [ | intros n IHn ].
 
 
+Theorem nat_ind_lt : forall P : nat -> Prop,
+    (forall n, (forall m, m < n -> P m) -> P n)
+    -> forall n, P n.
+Proof.
+  intros P HPi.
+  set (Q n := forall m, m <= n -> P m).
+  assert (forall n : nat, Q n).
+    intros.
+    induction n.
+      unfold Q.
+      intros.
+      inversion H.
+      apply HPi.
+      intros.
+      contradict H1.
+      apply lt_n_0.
+
+      unfold Q.
+      intros.
+      apply le_lt_eq_dec in H.
+      destruct H as [Hl | Heq].
+        unfold lt in Hl. apply le_S_n in Hl.
+        apply IHn. exact Hl.
+
+        rewrite Heq.
+        apply HPi.
+        intros.
+        apply le_S_n in H.
+        apply IHn. exact H.
+
+  intro.
+  apply (H n).
+  apply le_n.
+Qed.
+
+Ltac induction_lt_nat n := let IHn := fresh "IH" n in 
+  try intros until n; pattern n; apply nat_ind_lt; clear n; intros n IHn.
+
+
 
 Theorem nat_pred_interval_dec : forall P : nat -> Prop, (forall n, {P n} + {~ P n})
     -> forall n m, {exists k, n <= k < m /\ P k} + {forall k, n <= k < m -> ~ P k}.
