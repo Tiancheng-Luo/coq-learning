@@ -502,29 +502,63 @@ Check consv 1 (consv 2 nilv).
 
 Fixpoint lengthv {T : Type} {n : nat} (v : vector T n) : nat := admit.
 
-Fixpoint repeatv {X : Type} (x : X) (n : nat) : vector X n := admit.
+Fixpoint repeatv {X : Type} (x : X) (n : nat) : vector X n :=
+  match n with
+    | 0 => nilv
+    | S n' => consv x (repeatv x n')
+  end.
 
 Theorem lengthv_repeatv : forall n X (x : X), lengthv (repeatv x n) = n.
 Proof.
 Admitted.
 (* Show that simpl is not enough here, but compute is, or unfold. *)
 
-Check @repeat.
-Check @repeatv.
+Notation "[[ x , .. , y ]]" := (consv x .. (consv y nilv) ..).
+
+
+(* Skip here to talk about Curry-Howard *)
+
+Check [1,2,3].
+Check [[1,2,3]].
+
+Compute repeat true 3.
+Compute repeatv true 3.
+
+Check @repeat bool.
+Check @repeatv bool.
 
 (* Relation of 'forall' and '->' *)
 
-Parameter p q : Prop.
+End ExampleList2.
 
-Print p.
+Module ExamplesC_H.
 
-Definition p_to_q := forall h : p, q.
+Parameter A B : Prop.
 
-Print p_to_q.
+Print A.
+
+Definition A_to_B := forall h : A, B.
+
+Print A_to_B.
 
 Check forall n : nat, bool.
 
-Check forall n : nat, p.
+Check forall n : nat, A.
 
+Theorem A_to_B_to_A : A -> B -> A.
+Proof.
+  intros.
+  assumption.
+  Show Proof.
+Qed.
 
-End ExampleList2.
+(* two_times_n_plus_3 *)
+
+(* P -> True *)
+
+(* False -> P *)
+
+(* Classical vs. Intuitionistic logic *)
+
+End ExamplesC_H.
+
